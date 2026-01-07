@@ -1,10 +1,12 @@
+import sqlite3
 from datetime import datetime
+from typing import Annotated
 
 from langchain_core.language_models import FakeListChatModel
 from langchain_core.messages import AIMessage
+from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
-from typing import Annotated
 from typing_extensions import TypedDict
 
 
@@ -33,4 +35,6 @@ graph_builder.add_node("chatbot", chatbot)
 graph_builder.add_edge(START, "chatbot")
 graph_builder.add_edge("chatbot", END)
 
-graph = graph_builder.compile()
+_conn = sqlite3.connect("conversations.db", check_same_thread=False)
+checkpointer = SqliteSaver(_conn)
+graph = graph_builder.compile(checkpointer=checkpointer)

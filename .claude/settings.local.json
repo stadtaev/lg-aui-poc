@@ -4,7 +4,8 @@
       "Bash(uv add:*)",
       "Bash(~/.local/bin/uv add:*)",
       "Bash(mkdir:*)",
-      "Bash(uv run python:*)"
+      "Bash(uv run python:*)",
+      "Bash(cat:*)"
     ]
   }
 }
