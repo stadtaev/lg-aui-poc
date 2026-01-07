@@ -1,6 +1,17 @@
-def main():
-    print("Hello from lg-aui-poc!")
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI()
 
 
-if __name__ == "__main__":
-    main()
+class ChatRequest(BaseModel):
+    message: str
+
+
+class ChatResponse(BaseModel):
+    reply: str
+
+
+@app.post("/chat", response_model=ChatResponse)
+def chat(request: ChatRequest) -> ChatResponse:
+    return ChatResponse(reply=f"You said: {request.message}")
