@@ -7,7 +7,12 @@
       "Bash(uv run python:*)",
       "Bash(cat:*)",
       "Bash(npm install:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "WebSearch",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:www.assistant-ui.com)",
+      "Bash(curl:*)",
+      "Bash(python3:*)"
     ]
   }
 }
