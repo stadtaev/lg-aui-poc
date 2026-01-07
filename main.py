@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from langchain_core.messages import HumanMessage
+
+from agent import graph
 
 app = FastAPI()
 
@@ -14,4 +17,6 @@ class ChatResponse(BaseModel):
 
 @app.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest) -> ChatResponse:
-    return ChatResponse(reply=f"You said: {request.message}")
+    result = graph.invoke({"messages": [HumanMessage(content=request.message)]})
+    reply = result["messages"][-1].content
+    return ChatResponse(reply=reply)
