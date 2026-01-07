@@ -1,64 +1,46 @@
-# Langgraph<->assistant-ui poc
+# LangGraph Chat POC
 
-Proof of concept for testing assistant-ui connectivity settings with LangGraph backend.
+A minimal full-stack chat application with React frontend and LangGraph-powered backend.
 
-## Setup
+## Quick Start
 
 ```bash
+# Install dependencies
 uv sync
-```
 
-## Run
-
-```bash
+# Run (builds frontend + starts server)
 ./run.sh
 ```
 
-## Endpoints
+Open `http://localhost:8000`
 
-- `POST /chat` - Chat endpoint with thread support
-- `GET /threads` - List all conversation threads
-- `GET /threads/{id}/history` - Get thread conversation history
-- `DELETE /threads/{id}` - Delete a thread
-- `GET /docs` - OpenAPI documentation
-
-## Usage
-
-### Start a new conversation
+## Development
 
 ```bash
-curl -X POST http://localhost:8000/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Hello!"}'
+# Run with hot reload
+./run-dev.sh
 ```
 
-Response:
-```json
-{"reply": "...", "thread_id": "abc-123-..."}
-```
+- Frontend: `http://localhost:5173` (Vite dev server)
+- Backend: `http://localhost:8000` (FastAPI)
+- API docs: `http://localhost:8000/docs`
 
-### Continue a conversation
+## Features
 
-```bash
-curl -X POST http://localhost:8000/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Tell me more", "thread_id": "abc-123-..."}'
-```
+- Chat UI with conversation threads
+- Thread persistence (SQLite)
+- Single server deployment
 
-### List all threads
+## API
 
-```bash
-curl http://localhost:8000/threads
-```
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/chat` | Send message |
+| GET | `/threads` | List threads |
+| GET | `/threads/{id}/history` | Get history |
+| DELETE | `/threads/{id}` | Delete thread |
 
-### Get conversation history
+## Tech Stack
 
-```bash
-curl http://localhost:8000/threads/abc-123-.../history
-```
-
-### Delete a thread
-
-```bash
-curl -X DELETE http://localhost:8000/threads/abc-123-...
-```
+- **Backend**: FastAPI, LangGraph, SQLite
+- **Frontend**: React, Vite, Plain CSS

@@ -11,3 +11,7 @@ wheels/
 
 # Database
 conversations.db
+
+# Frontend
+frontend/node_modules/
+static/

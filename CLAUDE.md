@@ -1,6 +1,6 @@
 ## Project Overview: lg-aui-poc
 
-This is a **LangGraph + Assistant UI Proof of Concept** - a lightweight Python project for testing AI chat connectivity.
+This is a **LangGraph + Assistant UI Proof of Concept** - a full-stack chat application with React frontend and FastAPI backend.
 
 ### Code Philosophy
 - **Idiomatic Python** - Follow established conventions and patterns (PEP 8, PEP 20)
@@ -9,33 +9,45 @@ This is a **LangGraph + Assistant UI Proof of Concept** - a lightweight Python p
 
 ### Structure
 ```
-├── main.py              # FastAPI app entry point
+├── main.py              # FastAPI app, serves API + static files
 ├── agent.py             # LangGraph agent with SQLite checkpointer
 ├── routers/
-│   ├── __init__.py
 │   ├── chat.py          # Chat endpoint and schemas
-│   └── threads.py       # Thread management endpoints
-├── pyproject.toml       # Dependencies (FastAPI, LangGraph, LangChain)
-├── run.sh               # Startup script
-└── uv.lock              # uv package manager lock file
+│   ├── threads.py       # Thread management endpoints
+│   └── static.py        # Serves built frontend
+├── frontend/            # Vite + React app
+│   ├── src/
+│   │   ├── App.jsx      # Main chat component
+│   │   └── App.css      # Styles
+│   ├── vite.config.js   # Build config, API proxy
+│   └── package.json
+├── static/              # Built frontend (gitignored)
+├── run.sh               # Production: build + serve
+└── run-dev.sh           # Development: hot reload
 ```
 
 ### Tech Stack
-- **FastAPI** - Web framework with APIRouter pattern
-- **LangGraph** - LLM agent orchestration with checkpointing
-- **LangChain-OpenAI** - OpenAI integration
-- **SQLite** - Thread persistence via LangGraph checkpointer
-- **uv** - Package manager
+**Backend:**
+- FastAPI - Web framework with APIRouter pattern
+- LangGraph - LLM agent orchestration with checkpointing
+- SQLite - Thread persistence via LangGraph checkpointer
+
+**Frontend:**
+- React 18 - UI library
+- Vite - Build tool
+- Plain CSS - Styling
 
 ### Features
+- **React chat UI** - Minimalistic interface with thread sidebar
 - **Conversation threads** - Multi-turn conversations with persistent history
 - **Thread management** - List, view history, and delete threads
-- **Auto-generated thread IDs** - New conversations get UUID if not provided
+- **Self-hosted** - Single server serves both API and UI
 - Agent uses `FakeListChatModel` (mock) - swap for real LLM when ready
 
 ### API Endpoints
 | Method | Endpoint | Description |
 |--------|----------|-------------|
+| GET | `/` | Serve React app |
 | POST | `/chat` | Send message, optionally with `thread_id` |
 | GET | `/threads` | List all thread IDs |
 | GET | `/threads/{id}/history` | Get conversation history |
@@ -43,9 +55,12 @@ This is a **LangGraph + Assistant UI Proof of Concept** - a lightweight Python p
 
 ### Run the Project
 ```bash
+# Production (builds frontend, serves on :8000)
 ./run.sh
-# or
-uv run uvicorn main:app --reload --log-level info
+
+# Development (hot reload on :5173, API on :8000)
+./run-dev.sh
 ```
 
-API docs available at `http://localhost:8000/docs`
+App: `http://localhost:8000` (prod) or `http://localhost:5173` (dev)
+API docs: `http://localhost:8000/docs`
