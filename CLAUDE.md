@@ -1,36 +1,40 @@
-  ⎿ ## Project Overview: lg-aui-poc
+## Project Overview: lg-aui-poc
 
-    This is a **LangGraph + Assistant UI Proof of Concept** - a lightweight Python
-     project for testing AI chat connectivity.
+This is a **LangGraph + Assistant UI Proof of Concept** - a lightweight Python project for testing AI chat connectivity.
 
-    ### Structure
-    ```
-    ├── main.py          # FastAPI app with POST /chat endpoint
-    ├── agent.py         # LangGraph agent (currently using mock LLM)
-    ├── pyproject.toml   # Dependencies (FastAPI, LangGraph, LangChain)
-    ├── run.sh           # Startup script
-    └── uv.lock          # uv package manager lock file
-    ```
+### Code Philosophy
+- **Idiomatic Python** - Follow established conventions and patterns (PEP 8, PEP 20)
+- **Readability first** - Code should be obvious to read and understand
+- **Simplicity over cleverness** - Prefer straightforward solutions over complex abstractions
 
-    ### Tech Stack
-    - **FastAPI** - Web framework
-    - **LangGraph** - LLM agent orchestration
-    - **LangChain-OpenAI** - OpenAI integration
-    - **uv** - Package manager
+### Structure
+```
+├── main.py              # FastAPI app entry point
+├── agent.py             # LangGraph agent (currently using mock LLM)
+├── routers/
+│   ├── __init__.py
+│   └── chat.py          # Chat endpoint and schemas
+├── pyproject.toml       # Dependencies (FastAPI, LangGraph, LangChain)
+├── run.sh               # Startup script
+└── uv.lock              # uv package manager lock file
+```
 
-    ### Current State
-    - Single `/chat` endpoint accepts `{"message": "text"}` and returns `{"reply":
-     "response"}`
-    - Agent uses `FakeListChatModel` (mock) that returns test responses
-    - Simple START → chatbot → END workflow
+### Tech Stack
+- **FastAPI** - Web framework with APIRouter pattern
+- **LangGraph** - LLM agent orchestration
+- **LangChain-OpenAI** - OpenAI integration
+- **uv** - Package manager
 
-    ### Run the Project
-    ```bash
-    ./run.sh
-    # or
-    uv run uvicorn main:app --reload --log-level info
-    ```
+### Current State
+- Single `/chat` endpoint accepts `{"message": "text"}` and returns `{"reply": "response"}`
+- Agent uses `FakeListChatModel` (mock) that returns test responses
+- Simple START → chatbot → END workflow
 
-    API docs available at `http://localhost:8000/docs`
+### Run the Project
+```bash
+./run.sh
+# or
+uv run uvicorn main:app --reload --log-level info
+```
 
-    What would you like to do with this project?
+API docs available at `http://localhost:8000/docs`
