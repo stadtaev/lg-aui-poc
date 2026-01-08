@@ -11,6 +11,7 @@ export default defineConfig({
     proxy: {
       '/chat': 'http://localhost:8000',
       '/chat-aui-es': 'http://localhost:8000',
+      '/api/langgraph': 'http://localhost:8000',
       '/threads': 'http://localhost:8000',
     },
   },

@@ -12,7 +12,9 @@
       "WebFetch(domain:www.npmjs.com)",
       "WebFetch(domain:www.assistant-ui.com)",
       "Bash(curl:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(source .venv/bin/activate)"
     ]
   }
 }

@@ -15,3 +15,5 @@ conversations.db
 # Frontend
 frontend/node_modules/
 static/
+conversations.db-shm
+conversations.db-wal
