@@ -65,9 +65,11 @@ function Composer() {
 
 export default function LangGraphChat() {
   const [threadId, setThreadId] = useState(null)
+  const [chatKey, setChatKey] = useState(0)
 
   function startNewThread() {
     setThreadId(null)
+    setChatKey(k => k + 1)
   }
 
   return (
@@ -81,7 +83,7 @@ export default function LangGraphChat() {
 
       <main className="chat langgraph-chat">
         <LangGraphChatInner
-          key={threadId || 'new'}
+          key={chatKey}
           threadId={threadId}
           setThreadId={setThreadId}
         />
