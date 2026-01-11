@@ -1,70 +1,17 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import {
   AssistantRuntimeProvider,
-  useLocalRuntime,
   ThreadPrimitive,
   ComposerPrimitive,
   MessagePrimitive,
 } from '@assistant-ui/react'
-import {
-  AssistantStream,
-  AssistantTransportDecoder,
-} from 'assistant-stream'
+import { useLangGraphChatRuntime } from './LangGraphChatRuntime'
 
 function LangGraphChatInner({ threadId, setThreadId }) {
-  const adapter = useMemo(() => ({
-    async *run({ messages, abortSignal }) {
-      // Get the last user message
-      const lastMessage = messages[messages.length - 1]
-      if (!lastMessage || lastMessage.role !== 'user') return
-
-      const userText = lastMessage.content
-        .filter(part => part.type === 'text')
-        .map(part => part.text)
-        .join('')
-
-      const response = await fetch('/api/langgraph/lgchat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: userText,
-          thread_id: threadId,
-        }),
-        signal: abortSignal,
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error: ${response.status}`)
-      }
-
-      const stream = AssistantStream.fromResponse(
-        response,
-        new AssistantTransportDecoder()
-      )
-
-      let accumulatedText = ''
-      const reader = stream.getReader()
-
-      while (true) {
-        const { done, value: chunk } = await reader.read()
-        if (done) break
-
-        if (chunk.type === 'text-delta') {
-          accumulatedText += chunk.textDelta
-          yield {
-            content: [{ type: 'text', text: accumulatedText }],
-          }
-        }
-      }
-
-      // Update threadId if it was newly created
-      if (!threadId) {
-        setThreadId(crypto.randomUUID())
-      }
-    },
-  }), [threadId, setThreadId])
-
-  const runtime = useLocalRuntime(adapter)
+  const runtime = useLangGraphChatRuntime({
+    threadId,
+    onThreadCreated: setThreadId,
+  })
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>
