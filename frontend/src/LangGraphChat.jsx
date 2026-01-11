@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react'
+import { useState, useMemo } from 'react'
 import {
   AssistantRuntimeProvider,
-  useExternalStoreRuntime,
+  useLocalRuntime,
   ThreadPrimitive,
   ComposerPrimitive,
   MessagePrimitive,
@@ -12,22 +12,17 @@ import {
 } from 'assistant-stream'
 
 function LangGraphChatInner({ threadId, setThreadId }) {
-  const [messages, setMessages] = useState([])
-  const [isRunning, setIsRunning] = useState(false)
+  const adapter = useMemo(() => ({
+    async *run({ messages, abortSignal }) {
+      // Get the last user message
+      const lastMessage = messages[messages.length - 1]
+      if (!lastMessage || lastMessage.role !== 'user') return
 
-  const onNew = useCallback(async (message) => {
-    const userText = message.content[0]?.text || ''
-    const userMessage = {
-      id: crypto.randomUUID(),
-      role: 'user',
-      content: [{ type: 'text', text: userText }],
-    }
-    setMessages(prev => [...prev, userMessage])
-    setIsRunning(true)
+      const userText = lastMessage.content
+        .filter(part => part.type === 'text')
+        .map(part => part.text)
+        .join('')
 
-    const assistantMessageId = crypto.randomUUID()
-
-    try {
       const response = await fetch('/api/langgraph/lgchat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -35,79 +30,41 @@ function LangGraphChatInner({ threadId, setThreadId }) {
           prompt: userText,
           thread_id: threadId,
         }),
+        signal: abortSignal,
       })
 
       if (!response.ok) {
         throw new Error(`HTTP error: ${response.status}`)
       }
 
-      // Decode the AssistantTransportResponse stream
       const stream = AssistantStream.fromResponse(
         response,
         new AssistantTransportDecoder()
       )
 
       let accumulatedText = ''
-
-      // Add initial assistant message
-      setMessages(prev => [...prev, {
-        id: assistantMessageId,
-        role: 'assistant',
-        content: [{ type: 'text', text: '' }],
-      }])
-
-      // Process the stream
       const reader = stream.getReader()
+
       while (true) {
         const { done, value: chunk } = await reader.read()
         if (done) break
 
-        // Handle different chunk types
         if (chunk.type === 'text-delta') {
           accumulatedText += chunk.textDelta
-          setMessages(prev => prev.map(msg =>
-            msg.id === assistantMessageId
-              ? { ...msg, content: [{ type: 'text', text: accumulatedText }] }
-              : msg
-          ))
+          yield {
+            content: [{ type: 'text', text: accumulatedText }],
+          }
         }
       }
 
-      // If no thread_id was set, we might need to extract it from stream
-      // For now, generate one if not provided
+      // Update threadId if it was newly created
       if (!threadId) {
-        const newThreadId = crypto.randomUUID()
-        setThreadId(newThreadId)
+        setThreadId(crypto.randomUUID())
       }
+    },
+  }), [threadId, setThreadId])
 
-    } catch (err) {
-      console.error('Stream error:', err)
-      setMessages(prev => {
-        // Remove the empty assistant message if it exists
-        const filtered = prev.filter(m => m.id !== assistantMessageId)
-        return [...filtered, {
-          id: crypto.randomUUID(),
-          role: 'assistant',
-          content: [{ type: 'text', text: `Error: ${err.message}` }],
-        }]
-      })
-    } finally {
-      setIsRunning(false)
-    }
-  }, [threadId, setThreadId])
-
-  const convertMessage = useCallback((msg) => ({
-    id: msg.id,
-    role: msg.role,
-    content: msg.content,
-  }), [])
-
-  const runtime = useExternalStoreRuntime({
-    isRunning,
-    messages,
-    convertMessage,
-    onNew,
-  })
+  const runtime = useLocalRuntime(adapter)
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>

@@ -104,7 +104,7 @@ def stream_run(thread_id: str, request: RunInput):
 
 @router.post("/lgchat")
 async def lgchat(request: ChatInput):
-    """Simple chat endpoint with AssistantTransportResponse streaming."""
+    """Chat endpoint with AssistantTransportResponse streaming."""
     thread_id = request.thread_id or str(uuid.uuid4())
 
     async def callback(controller: RunController):
