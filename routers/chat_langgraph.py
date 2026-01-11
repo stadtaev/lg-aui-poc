@@ -21,6 +21,11 @@ class RunInput(BaseModel):
     messages: list[dict]
 
 
+class ChatInput(BaseModel):
+    prompt: str
+    thread_id: str | None = None
+
+
 def message_to_dict(msg: BaseMessage) -> dict:
     """Convert LangChain message to dict format."""
     return {
@@ -81,6 +86,42 @@ def stream_run(thread_id: str, request: RunInput):
 
         # Signal completion
         yield "event: messages/complete\ndata: []\n\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@router.post("/lgchat")
+def lgchat(request: ChatInput):
+    """Simple chat endpoint with SSE streaming response."""
+    thread_id = request.thread_id or str(uuid.uuid4())
+
+    def generate():
+        # Send thread_id first so client knows which thread is being used
+        yield f"event: metadata\ndata: {json.dumps({'thread_id': thread_id})}\n\n"
+
+        config = {"configurable": {"thread_id": thread_id}}
+        input_message = HumanMessage(content=request.prompt)
+
+        for chunk in graph.stream(
+            {"messages": [input_message]},
+            config,
+            stream_mode="messages",
+        ):
+            if isinstance(chunk, tuple):
+                msg, metadata = chunk
+                if isinstance(msg, AIMessage):
+                    event_data = message_to_dict(msg)
+                    yield f"event: message\ndata: {json.dumps(event_data)}\n\n"
+
+        yield "event: done\ndata: {}\n\n"
 
     return StreamingResponse(
         generate(),
