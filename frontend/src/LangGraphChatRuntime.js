@@ -3,7 +3,7 @@ import { useLocalRuntime } from '@assistant-ui/react'
 import {
   AssistantStream,
   AssistantTransportDecoder,
-  AssistantMessageAccumulator
+  AssistantMessageAccumulator,
 } from 'assistant-stream'
 
 function createChatModelAdapter({ threadIdRef, onThreadCreated }) {
@@ -37,24 +37,19 @@ function createChatModelAdapter({ threadIdRef, onThreadCreated }) {
         throw new Error(`HTTP error: ${response.status}`)
       }
 
-      const stream = AssistantStream.fromResponse(
+      // Decode and accumulate the stream
+      const messageStream = AssistantStream.fromResponse(
         response,
         new AssistantTransportDecoder()
-      )
+      ).pipeThrough(new AssistantMessageAccumulator())
 
-      let accumulatedText = ''
-      const reader = stream.getReader()
+      // Yield accumulated messages as they update
+      for await (const message of messageStream) {
+        const textContent = message.content
+          .filter(part => part.type === 'text')
+          .map(part => ({ type: 'text', text: part.text }))
 
-      while (true) {
-        const { done, value: chunk } = await reader.read()
-        if (done) break
-
-        if (chunk.type === 'text-delta') {
-          accumulatedText += chunk.textDelta
-          yield {
-            content: [{ type: 'text', text: accumulatedText }],
-          }
-        }
+        yield { content: textContent }
       }
     },
   }
