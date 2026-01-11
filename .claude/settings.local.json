@@ -14,7 +14,10 @@
       "Bash(curl:*)",
       "Bash(python3:*)",
       "WebFetch(domain:github.com)",
-      "Bash(source .venv/bin/activate)"
+      "Bash(source .venv/bin/activate)",
+      "Bash(pip install:*)",
+      "Bash(python -m pip install:*)",
+      "Bash(ls:*)"
     ]
   }
 }

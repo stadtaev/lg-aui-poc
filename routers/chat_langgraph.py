@@ -3,6 +3,10 @@
 import json
 import uuid
 
+from assistant_stream import RunController, create_run
+from assistant_stream.serialization.assistant_transport import (
+    AssistantTransportResponse,
+)
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
@@ -41,7 +45,7 @@ def create_thread() -> ThreadResponse:
     return ThreadResponse(thread_id=str(uuid.uuid4()))
 
 
-@router.get("/threads/{thread_id}/state")
+@router.get("/threads/{thread_id}/states")
 def get_thread_state(thread_id: str):
     """Get thread state in LangGraph format."""
     config = {"configurable": {"thread_id": thread_id}}
@@ -99,14 +103,11 @@ def stream_run(thread_id: str, request: RunInput):
 
 
 @router.post("/lgchat")
-def lgchat(request: ChatInput):
-    """Simple chat endpoint with SSE streaming response."""
+async def lgchat(request: ChatInput):
+    """Simple chat endpoint with AssistantTransportResponse streaming."""
     thread_id = request.thread_id or str(uuid.uuid4())
 
-    def generate():
-        # Send thread_id first so client knows which thread is being used
-        yield f"event: metadata\ndata: {json.dumps({'thread_id': thread_id})}\n\n"
-
+    async def callback(controller: RunController):
         config = {"configurable": {"thread_id": thread_id}}
         input_message = HumanMessage(content=request.prompt)
 
@@ -117,18 +118,7 @@ def lgchat(request: ChatInput):
         ):
             if isinstance(chunk, tuple):
                 msg, metadata = chunk
-                if isinstance(msg, AIMessage):
-                    event_data = message_to_dict(msg)
-                    yield f"event: message\ndata: {json.dumps(event_data)}\n\n"
+                if isinstance(msg, AIMessage) and msg.content:
+                    controller.append_text(msg.content)
 
-        yield "event: done\ndata: {}\n\n"
-
-    return StreamingResponse(
-        generate(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",
-        },
-    )
+    return AssistantTransportResponse(create_run(callback))
