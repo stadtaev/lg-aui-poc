@@ -37,19 +37,11 @@ function createChatModelAdapter({ threadIdRef, onThreadCreated }) {
         throw new Error(`HTTP error: ${response.status}`)
       }
 
-      // Decode and accumulate the stream
-      const messageStream = AssistantStream.fromResponse(
-        response,
-        new AssistantTransportDecoder()
-      ).pipeThrough(new AssistantMessageAccumulator())
+      const stream = AssistantStream.fromResponse(response, new AssistantTransportDecoder())
+        .pipeThrough(new AssistantMessageAccumulator())
 
-      // Yield accumulated messages as they update
-      for await (const message of messageStream) {
-        const textContent = message.content
-          .filter(part => part.type === 'text')
-          .map(part => ({ type: 'text', text: part.text }))
-
-        yield { content: textContent }
+      for await (const message of stream) {
+        yield { content: message.content }
       }
     },
   }
